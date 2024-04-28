@@ -7,10 +7,10 @@
 #include <Adafruit_MPU6050.h>
 
 //Define constants
-#define chargepin 6
-#define buzzer 5
-#define buzztime 3000
-#define flushtime 2000
+#define chargepin 6 //change to whatever pin you're using to trigger deployment
+#define buzzer 5 //change to whatever pin you're using for buzzer and/or LED
+#define buzztime 3000 //interval for tone to indicate logging is happening-
+#define flushtime 2000 //interval for clearing for flushing to SD card
 #define armcheck 10 //<--This is the minimum height in meters that the deployment charge can go off. Change this for whatever needed.
 #define logtime 15 //set logging delay. the logging loop takes approximately 10ms, this is additional time added to the loop
 
@@ -34,10 +34,9 @@ SdFile logfile;
 
 void setup() {
 //set the charge pin mode safely
-  Serial.begin(9600);
-  digitalWrite(chargepin, LOW);
   pinMode(chargepin, OUTPUT);
   digitalWrite(chargepin, LOW);
+
 //setup begin tone
   pinMode(buzzer, OUTPUT);
   tone(buzzer, 4500, 100);
@@ -47,15 +46,16 @@ void setup() {
   tone(buzzer, 4500, 100);
   delay(150);
   tone(buzzer, 5800, 500);
+
 //setup BMP, MPU and SD
   #define COMMA logfile.print(",");
+
   bmp.begin(0x76); //<--I2C address is needed apparently otherwise baro just spits out garbage.
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
                   Adafruit_BMP280::SAMPLING_X4,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X4,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1);   /* Standby time. */
-  Serial.println("1");
   
   mpu.begin();
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
@@ -87,7 +87,6 @@ void setup() {
        while (1);
        }
 
-
 //Figure out an offest for height above ground. There's a better way to do this with the BMP probably.
   Wire.begin();
   altioffset = bmp.readAltitude();
@@ -101,7 +100,7 @@ void setup() {
 
 //Read stuff from the BMP sensor, store it in variables
 void readsensors (void) {
-  Wire.begin(0x67);
+  Wire.begin(0x76);
   pres = bmp.readPressure() / 100.0;
   alti = 44330.0 * (1.0 - pow(pres / 1013.25, 0.1903));
   correctedalt = alti - altioffset;
